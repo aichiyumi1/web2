@@ -1,5 +1,4 @@
 streamlit
 pillow
-turtle
 time
 random
