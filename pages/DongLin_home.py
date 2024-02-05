@@ -1,0 +1,230 @@
+"""我的主页"""
+# 导入需要的库
+import streamlit as st
+from PIL import Image, ImageFilter, ImageOps, ImageDraw, ImageFont
+import webbrowser
+
+# 使用streamlit库中所有功能几乎都以组件的形式调用
+page = st.sidebar.radio("我的首页", ["我的个人资料", "网站代码展示", "我的图片换色工具", "我的图片尺寸调整工具", "我的图片滤镜工具", "我的智慧词典", "我的留言区"])  # 使用sidebar()组件创建侧边栏结构
+
+# 定义每一页的函数
+def page1():  # 我的个人资料
+    with open("DongLin_BGM1.mp3", "rb") as f:
+        myMp3 = f.read()
+    st.snow()  # 雪
+    st.audio(myMp3, format="audio/mp3", start_time=1)
+    st.image("DongLin_Pic1.jpg", width=300)
+    st.subheader(":green[我的个人主页]")
+    if(st.button("GitHub")):
+        webbrowser.open("https://github.com/RainWoodForest")
+    if(st.button("哔哩哔哩")):
+        webbrowser.open("https://space.bilibili.com/672508011")
+    if(st.button("编程猫社区")):
+        webbrowser.open("https://shequ.codemao.cn/user/939345")
+    if(st.button("神奇代码岛")):
+        webbrowser.open("https://box3.codemao.cn/u/12753431")
+        
+def page2():  # 网站代码展示
+    with open("DongLin_Code.txt", encoding="utf-8") as c:
+        code = c.read()
+    st.code(code, language='python')
+    
+def page3():  # 我的图片换色工具
+    st.balloons()  # 气球
+    st.subheader(":green[:sparkles:图片换色小程序:sparkles:]")
+    st.text("交换图片的RGB值")
+    uploaded_file = st.file_uploader("上传图片", type=["png","jpeg","jpg","bmp"])
+    if(uploaded_file):
+        # 获取图片文件的名称.类型.大小
+        file_name = uploaded_file.name  # 文件名字
+        file_type = uploaded_file.type  # 文件格式
+        file_size = uploaded_file.size  # 文件大小
+        img = Image.open(uploaded_file)
+        st.image(img)
+        tab1,tab2,tab3,tab4 = st.tabs(["原图RGB","改色RBG","改色GBR","改色GRB"])
+        with(tab1):
+            st.image(img)
+        with(tab2):
+            st.image(img_change(img, 0, 2, 1))
+        with(tab3):
+            st.image(img_change(img, 1, 2, 0))
+        with(tab4):
+            st.image(img_change(img, 1, 0, 2))
+
+def page4():  # 我的图片尺寸调整工具
+    st.subheader(":green[:sparkles:图片尺寸调整工具:sparkles:]")
+    st.text("自定义调整图片尺寸")
+    uploaded_file = st.file_uploader("上传图片", type=["png","jpeg","jpg","bmp"])
+    if(uploaded_file):
+        img = Image.open(uploaded_file)
+        st.image(img)
+        old_width, old_height = img.size
+        new_width = st.number_input(label="请输入新图片的宽", min_value=1, value=old_width, step=1)
+        new_height = st.number_input(label="请输入新图片的高", min_value=1, value=old_height, step=1)
+        if(st.button("确定")):
+            img1 = img.resize(( int(new_width), int(new_height) ))
+            st.image(img1)
+
+# 滤镜
+filters = {
+    "模糊滤镜": ImageFilter.BLUR,
+    "轮廓滤镜": ImageFilter.CONTOUR,
+    "边缘增强滤镜": ImageFilter.EDGE_ENHANCE,
+    "浮雕滤镜": ImageFilter.EMBOSS,
+    "锐化滤镜": ImageFilter.SHARPEN,
+    "平滑滤镜": ImageFilter.SMOOTH,
+}
+
+def page5():  # 我的图片滤镜工具
+    global filters
+    st.subheader(":green[:sparkles:图片滤镜调整工具:sparkles:]")
+    st.text("自定义调整图片滤镜")
+    type_list = ["png","jpeg","jpg","bmp"]
+    uploaded_file = st.file_uploader("上传图片", type=type_list)
+    if(uploaded_file):
+        # 获取图片文件的名称.类型.大小
+        file_name = uploaded_file.name  # 文件名字
+        file_type = uploaded_file.type  # 文件格式
+        file_size = uploaded_file.size  # 文件大小
+        img = Image.open(uploaded_file)
+        st.image(img)
+        # 定义选项列表
+        filter_options = ['请选择...', '模糊滤镜', '轮廓滤镜', '边缘增强滤镜', '浮雕滤镜', '锐化滤镜', '平滑滤镜', '素描风格转化', '字符画风格转化(实验性功能)']
+        # 使用selectbox方法显示下拉选择框
+        selected_filter = st.selectbox('请选择一个滤镜', filter_options)
+        # 处理图片
+        if("滤镜" in selected_filter):
+            st.write("处理结果：")
+            img_temp = img.filter(filters[selected_filter]).convert("RGBA")
+            st.image(img_temp)
+        elif(selected_filter == "素描风格转化"):
+            st.write("处理结果：")
+            img_temp = to_sketch(img)
+            st.image(img_temp)
+        elif(selected_filter == "字符画风格转化(实验性功能)"):
+            st.info("字符画风格转化为实验性功能, 可能会出现转换有误的问题")
+            st.write("处理结果：")
+            img_temp = to_char(img)
+            st.image(img_temp)
+
+def page6():  # 我的智慧词典
+    st.subheader(":orange[:ledger:智慧词典:ledger:]")
+    # 从本地文件中将词典信息读取出来, 并存储在列表中
+    with open("DongLin_words_space.txt", "r", encoding="utf-8") as f:
+        words_list = f.read().split("\n")
+    # print(words_list)
+    # 将列表中的每一项内容再进行分割, 分为“编号、单词、解释”
+    for i in range(len(words_list)):
+        words_list[i] = words_list[i].split("#")
+    # 将列表中的内容导入字典, 方便查询, 格式为“单词:[编号,解释]”
+    words_dict = {}
+    for i in words_list:
+        words_dict[i[1]] = [int(i[0]), i[2]]
+    # print(words_dict)
+    # 创建输入框
+    word = st.text_input("请输入要查询的单词(按Enter键确认):", value="")
+    # 显示查询内容
+    if(word):
+        if (word in words_dict):
+            st.write(words_dict[word][1])
+            if (word == "birthday") or (word == "holiday") or (word == "vacation") or (word == "balloon"):
+                st.success("成功触发彩蛋")
+                st.balloons()
+            if (word == "winter") or (word == "snow"):
+                st.success("恭喜你发现彩蛋")
+                st.snow()
+        if (word in ["Python","python"]):
+            st.success("成功触发彩蛋")
+            st.code('''# 恭喜你发现彩蛋, 这里是一行Python代码
+print("This is a line of Python code. ")''', language="python")
+        elif (word in ["JS","js","JavaScript","javascript"]):
+            st.success("成功触发彩蛋")
+            st.code('''// 恭喜你发现彩蛋, 这里是一行JavaScript代码
+console.log("This is a line of JavaScript code. ")''', language="javascript")
+        elif (word == "bilibili"):
+            if(st.button("跳转")):
+                webbrowser.open("https://www.bilibili.com")
+        elif (word == "baidu"):
+            if(st.button("跳转")):
+                webbrowser.open("https://baidu.com")
+        elif (word == "GitHub"):
+            if(st.button("跳转")):
+                webbrowser.open("https://github.com")
+        elif (word == "codemao"):
+            if(st.button("跳转")):
+                webbrowser.open("https://www.codemao.cn")
+        elif not (word in words_dict):
+            st.warning("未找到结果！")
+    
+
+def page7():  # 我的留言区
+    textInput_result = st.text_area(label='留言区 可以输入文本内容, 但目前没什么用处:)', value="")
+
+def img_change(img, rc, gc, bc):
+    width, height = img.size
+    img_array = img.load()
+    for x in range(width):
+        for y in range(height):
+            R = img_array[x,y][rc]
+            G = img_array[x,y][gc]
+            B = img_array[x,y][bc]
+            img_array[x,y] = (R,G,B)
+    return img
+
+def to_sketch(img):
+    width,height = img.size
+    # 转灰度图
+    img_gray = img.convert("L")
+    # 反色
+    img_invert = ImageOps.invert(img_gray)
+    # 高斯模糊
+    img_gaussian = img_invert.filter(ImageFilter.GaussianBlur(5))
+    # 颜色减淡
+    for x in range(width):
+        for y in range(height):
+            pos = (x,y)
+            # 获取灰度图与高斯图的像素值
+            A = img_gray.getpixel(pos)
+            B = img_gaussian.getpixel(pos)
+            # 颜色减淡公式
+            img_gray.putpixel(pos,min(int(A+A*B/(255-B+1)),255))  # 手动防止除以零
+    return img_gray
+
+def to_char(img):
+    # 图片宽高
+    width, height = (70, 70)
+    # 灰度图
+    img = img.convert("L").resize((width, height))
+    # 70 level 字符串
+    ASCII_HIGH = """$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,\"^`'. """
+    # 灰度转字符串
+    txt = ""
+    for y in range(width):
+        for x in range(height):
+            pos = (x,y)
+            gray = img.getpixel(pos)  # 0-255
+            index = int(gray/256*70)
+            txt += ASCII_HIGH[index] + " "
+        txt += "\n"
+    # 字符串转图片
+    img_new = Image.new("RGB",(width*12,height*15),'white')
+    draw = ImageDraw.Draw(img_new)
+    draw.text((0,0), txt, fill='black', font=ImageFont.truetype("DongLin_Font_BD.ttf",10))
+    return img_new.resize((width*12,width*12)).convert("RGBA")
+
+# 判断用户点击的是哪个页, 并进行跳转
+if(page == "我的个人资料"):
+    page1()
+elif(page == "网站代码展示"):
+    page2()
+elif(page == "我的图片换色工具"):
+    page3()
+elif(page == "我的图片尺寸调整工具"):
+    page4()
+elif(page == "我的图片滤镜工具"):
+    page5()
+elif(page == "我的智慧词典"):
+    page6()
+elif(page == "我的留言区"):
+    page7()
+
